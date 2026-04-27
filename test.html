@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Stations météo – FAAA</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Stations météo – Commune de FAAA</h2>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<script>
+// Carte centrée sur Tahiti
+const map = L.map('map').setView([-17.55, -149.6], 12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+const csvURL = "https://raw.githubusercontent.com/polynesia1964/meteo-polynesie/refs/heads/main/postes_complets-2026.csv";
+
+Papa.parse(csvURL, {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function(results) {
+
+    console.log("CSV chargé :", results.data);
+
+    results.data.forEach(station => {
+
+      // Filtre EXACT : commune = FAAA
+      if (station.commune !== "FAAA") return;
+
+      // Vérification coordonnées
+      if (!station.latitude || !station.longitude) return;
+
+      const lat = parseFloat(station.latitude.replace(",", "."));
+      const lon = parseFloat(station.longitude.replace(",", "."));
+
+      if (isNaN(lat) || isNaN(lon)) return;
+
+      // Marqueur
+      L.marker([lat, lon]).addTo(map)
+        .bindPopup(`
+          <b>${station.nom_usuel}</b><br>
+          Commune : ${station.commune}<br>
+          Lieu-dit : ${station.lieu_dit || "—"}<br>
+          Latitude : ${lat}<br>
+          Longitude : ${lon}
+        `);
+    });
+  }
+});
+</script>
+
+</body>
+</html>
